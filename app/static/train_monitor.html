@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entraînement YOLO · Taghrid</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root { --bg:#f6f5f1; --card:#fff; --ink:#1d2320; --muted:#66706b; --line:#e3e1da; --accent:#1f7a5a;
+          --accent2:#c0612b; --track:#ebe9e2; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121614; --card:#1a201d; --ink:#e8ece9; --muted:#95a19b; --line:#2a322e; --accent:#4cc497;
+            --accent2:#e48a5f; --track:#252c28; } }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0; } .sub { color:var(--muted); margin:2px 0 18px; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+  @media (max-width:820px) { .grid { grid-template-columns:repeat(2,1fr); } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .k { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+  .v { font-size:26px; font-weight:650; font-variant-numeric:tabular-nums; margin-top:2px; }
+  .v small { font-size:14px; color:var(--muted); font-weight:500; }
+  .bar { height:10px; background:var(--track); border-radius:5px; overflow:hidden; margin:8px 0 4px; }
+  .fill { height:100%; background:var(--accent); width:0; transition:width .6s; }
+  .fill.b { background:var(--accent2); }
+  .row { display:flex; justify-content:space-between; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .wide { grid-column:1/-1; } .half { grid-column:span 2; }
+  @media (max-width:820px) { .half { grid-column:1/-1; } }
+  .pill { display:inline-block; padding:2px 10px; border-radius:99px; font-size:13px; background:var(--track); }
+  .pill.live { background:var(--accent); color:#fff; }
+  canvas { width:100%!important; height:260px!important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Entraînement YOLO · oiseaux du Maroc</h1>
+  <p class="sub">YOLO11-S · 83 espèces · GPU Apple M3 Pro (MPS) · <span id="run"></span> · mis à jour <span id="now"></span> <span id="phase" class="pill"></span></p>
+
+  <div class="grid">
+    <div class="card half">
+      <div class="k">Epoch en cours</div>
+      <div class="v"><span id="ep">–</span> <small>/ <span id="eps">–</span></small></div>
+      <div class="bar"><div id="epbar" class="fill b"></div></div>
+      <div class="row"><span id="batch">–</span><span id="epeta">–</span></div>
+    </div>
+    <div class="card half">
+      <div class="k">Progression globale</div>
+      <div class="v"><span id="done">–</span> <small>epochs terminées</small></div>
+      <div class="bar"><div id="allbar" class="fill"></div></div>
+      <div class="row"><span id="perep">–</span><span id="alleta">–</span></div>
+    </div>
+    <div class="card"><div class="k">Meilleur mAP50</div><div class="v" id="map50">–</div><div class="row"><span id="bestep"></span></div></div>
+    <div class="card"><div class="k">Meilleur mAP50-95</div><div class="v" id="map">–</div></div>
+    <div class="card"><div class="k">Vitesse GPU</div><div class="v" id="speed">–</div><div class="row"><span id="gpumem"></span></div></div>
+    <div class="card"><div class="k">RAM du Mac</div><div class="v" id="ram">–</div><div class="row"><span id="swap"></span></div></div>
+    <div class="card half"><div class="k">Précision de détection (validation)</div><canvas id="c1"></canvas></div>
+    <div class="card half"><div class="k">Pertes (train / validation)</div><canvas id="c2"></canvas></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const fmt = s => { if (s == null) return "–"; s = Math.round(s); const h = Math.floor(s/3600), m = Math.floor(s%3600/60);
+  return h ? `${h} h ${String(m).padStart(2,"0")}` : `${m} min ${String(s%60).padStart(2,"0")}`; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+Chart.defaults.color = css("--muted"); Chart.defaults.borderColor = css("--line");
+const mk = (id, sets) => new Chart($(id), { type: "line", data: { labels: [], datasets: sets.map(([l, c, d]) =>
+  ({ label: l, data: [], borderColor: c, backgroundColor: c, borderDash: d || [], tension: .25, pointRadius: 2 })) },
+  options: { animation: false, responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+             scales: { x: { title: { display: true, text: "epoch" } } } } });
+const c1 = mk("c1", [["mAP50", "#1f7a5a"], ["mAP50-95", "#4a6fd1"], ["précision", "#c0612b", [4,4]], ["rappel", "#8a5bb5", [4,4]]]);
+const c2 = mk("c2", [["box train", "#1f7a5a"], ["classe train", "#c0612b"], ["box val", "#1f7a5a", [4,4]], ["classe val", "#c0612b", [4,4]]]);
+
+async function refresh() {
+  try {
+    const s = await (await fetch("/api/status")).json();
+    $("run").textContent = s.run || "–"; $("now").textContent = s.now;
+    $("phase").textContent = s.phase; $("phase").className = "pill" + (s.alive ? " live" : "");
+    const c = s.current;
+    if (c) {
+      $("ep").textContent = c.epoch; $("eps").textContent = c.epochs;
+      $("epbar").style.width = (100 * c.batch / c.batches) + "%";
+      $("batch").textContent = `lot ${c.batch} / ${c.batches}`; $("epeta").textContent = `reste ${fmt(c.eta_epoch_s)}`;
+      $("speed").innerHTML = `${c.it_s} <small>lots/s</small>`; $("gpumem").textContent = `mémoire GPU ${c.gpu_mem}`;
+    }
+    $("done").textContent = s.done_epochs;
+    $("allbar").style.width = (100 * s.done_epochs / s.total_epochs) + "%";
+    $("perep").textContent = s.per_epoch_s ? `≈ ${fmt(s.per_epoch_s)} par epoch` : "–";
+    $("alleta").textContent = s.remaining_s ? `reste ≤ ${fmt(s.remaining_s)} (arrêt auto possible avant)` : "–";
+    if (s.best) { $("map50").textContent = s.best.map50.toFixed(3); $("map").textContent = s.best.map.toFixed(3);
+                  $("bestep").textContent = `epoch ${s.best.epoch}`; }
+    $("ram").innerHTML = `${s.ram.used_gb} <small>/ ${s.ram.total_gb} Go</small>`; $("swap").textContent = `swap ${s.ram.swap_gb} Go`;
+    const ep = s.rows.map(r => r.epoch), col = k => s.rows.map(r => r[k]);
+    c1.data.labels = ep; [["metrics/mAP50(B)"], ["metrics/mAP50-95(B)"], ["metrics/precision(B)"], ["metrics/recall(B)"]]
+      .forEach(([k], i) => c1.data.datasets[i].data = col(k)); c1.update();
+    c2.data.labels = ep; ["train/box_loss", "train/cls_loss", "val/box_loss", "val/cls_loss"]
+      .forEach((k, i) => c2.data.datasets[i].data = col(k)); c2.update();
+  } catch (e) { $("phase").textContent = "serveur injoignable"; }
+}
+refresh(); setInterval(refresh, 2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+# secrets et environnement local
+.env
+.venv/
+.vscode/
+.DS_Store
+__pycache__/
+*.pyc
+
+# données (data lake MinIO, caches, journaux de détection avec GPS)
+minio/
+data/
+datalake/
+logs/
+
+# poids pré-entraînés téléchargeables (Ultralytics)
+models/
+yolo11*.pt
+
+# sorties d'entraînement : seuls les modèles finaux et leurs métriques sont versionnés (git add -f)
+runs/
+
+# documents de travail non publiés
+article/
+screens/
+
+# application mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/ios/
+mobile/android/
+mobile/AGENTS.md
+
+# notes personnelles (commandes avec identifiants de l appareil)
+NOTES_LOCAL.md

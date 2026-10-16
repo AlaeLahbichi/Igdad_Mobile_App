@@ -1,0 +1,1 @@
+TEST  mAP50 0.794 | mAP50-95 0.706 | précision 0.803 | rappel 0.710

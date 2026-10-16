@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taghrid · Oiseaux du Maroc</title>
+<style>
+  :root {
+    --bg:#f6f5f1; --card:#fff; --ink:#1d2320; --muted:#66706b; --line:#e3e1da;
+    --accent:#1f7a5a; --accent-soft:#d8efe5; --warn:#b4572e; --track:#ebe9e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121614; --card:#1a201d; --ink:#e8ece9; --muted:#95a19b; --line:#2a322e;
+            --accent:#4cc497; --accent-soft:#1d3a2f; --warn:#e48a5f; --track:#252c28; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  main { max-width:1040px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 16px; }
+  .tabs { display:flex; gap:6px; margin-bottom:16px; }
+  .tab { font:inherit; padding:9px 18px; border-radius:10px; border:1px solid var(--line); background:var(--card);
+         color:var(--ink); cursor:pointer; font-weight:600; }
+  .tab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .grid { display:grid; grid-template-columns:1.25fr 1fr; gap:16px; }
+  @media (max-width:780px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:16px; }
+  .card h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 12px; }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  button, select, label.btn { font:inherit; border-radius:8px; border:1px solid var(--line); background:var(--card);
+                              color:var(--ink); padding:8px 12px; cursor:pointer; }
+  button.primary, label.btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled { opacity:.5; cursor:default; }
+  select { max-width:100%; flex:1; min-width:0; }
+  .status { font-size:13px; color:var(--muted); min-height:20px; margin-top:6px; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--muted); margin-right:6px; }
+  .dot.live { background:#d33; animation:pulse 1.2s infinite; } @keyframes pulse { 50% { opacity:.3; } }
+  canvas.spec { width:100%; height:170px; display:block; border-radius:8px; background:#000; margin-top:10px; }
+  audio { width:100%; margin-top:6px; }
+  .slider { display:flex; align-items:center; gap:10px; font-size:14px; margin:4px 0 14px; }
+  .slider input { flex:1; } .slider b { font-variant-numeric:tabular-nums; min-width:44px; text-align:right; }
+  .result { border-radius:12px; padding:18px; min-height:132px; display:flex; flex-direction:column; justify-content:center;
+            background:var(--track); }
+  .result.ok { background:var(--accent-soft); }
+  .result .sci { font-size:22px; font-weight:700; font-style:italic; }
+  .result .en { color:var(--muted); margin-top:2px; }
+  .result .conf { margin-top:10px; font-variant-numeric:tabular-nums; font-size:14px; }
+  .result.idle .sci { font-style:normal; font-weight:500; font-size:16px; color:var(--muted); }
+  .meter { height:8px; background:var(--card); border-radius:4px; overflow:hidden; margin-top:6px; position:relative; }
+  .meter .fill { height:100%; background:var(--accent); width:0; transition:width .4s; }
+  .meter .mark { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--warn); }
+  .truth { font-size:13px; margin-top:10px; color:var(--muted); min-height:20px; }
+  .truth b.ok { color:var(--accent); } .truth b.ko { color:var(--warn); }
+  .stage { position:relative; width:100%; background:#000; border-radius:8px; overflow:hidden; min-height:260px;
+           display:flex; align-items:center; justify-content:center; }
+  .stage canvas { max-width:100%; display:block; }
+  .stage .empty { color:#aaa; padding:40px 16px; text-align:center; }
+  .stage.drag { outline:3px dashed var(--accent); outline-offset:-6px; }
+  video { display:none; }
+  ul.log { list-style:none; margin:0; padding:0; max-height:220px; overflow:auto; font-size:14px; }
+  ul.log li { padding:6px 0; border-bottom:1px solid var(--line); display:flex; justify-content:space-between; gap:8px; }
+  ul.log li time { color:var(--muted); font-variant-numeric:tabular-nums; }
+  .hint { font-size:13px; color:var(--muted); margin:8px 0 0; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Taghrid · Oiseaux du Maroc</h1>
+  <p class="sub">83 espèces · reconnaissance par le <b>chant</b> (CNN sur spectrogrammes) ou par la <b>photo</b> (YOLO11). Un seul oiseau est annoncé, et seulement s'il dépasse le seuil de confiance.</p>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="audio">🎙️ Audio</button>
+    <button class="tab" data-tab="image">📷 Image</button>
+  </div>
+
+  <section id="tab-audio">
+    <div class="grid">
+      <div class="card">
+        <h2>Source sonore</h2>
+        <div class="controls">
+          <button id="micBtn" class="primary">🎙️ Écouter le micro</button>
+          <button id="stopBtn" disabled>■ Arrêter</button>
+        </div>
+        <div class="controls">
+          <select id="sampleSel"><option>Chargement…</option></select>
+          <button id="sampleBtn">▶ Jouer</button>
+          <button id="shuffleBtn" title="Autres enregistrements">↻</button>
+        </div>
+        <audio id="player" controls crossorigin="anonymous"></audio>
+        <div class="status"><span id="dot" class="dot"></span><span id="status">Prêt.</span></div>
+        <canvas id="spec" class="spec" width="900" height="256"></canvas>
+        <p class="hint">Les enregistrements proposés viennent du split test (jamais entendus pendant l'entraînement).</p>
+      </div>
+      <div class="card">
+        <h2>Oiseau identifié</h2>
+        <div class="slider">Seuil <input id="aThr" type="range" min="0.3" max="0.95" step="0.05" value="0.7"><b id="aThrV">70 %</b></div>
+        <div id="aRes" class="result idle"><div class="sci">En attente de son…</div></div>
+        <div id="aTruth" class="truth"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-image" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <h2>Photo</h2>
+        <div class="controls">
+          <label class="btn primary">📁 Importer une photo<input id="file" type="file" accept="image/*" hidden></label>
+          <button id="camBtn">📸 Caméra en direct</button>
+          <button id="camStop" disabled>■ Arrêter</button>
+        </div>
+        <div class="controls">
+          <select id="imgSel"><option>Chargement…</option></select>
+          <button id="imgBtn">🔍 Analyser</button>
+          <button id="imgShuffle" title="Autres images">↻</button>
+        </div>
+        <div id="stage" class="stage"><div class="empty">Glisse une photo ici, importe-la, ou choisis une image de test.</div></div>
+        <video id="video" playsinline muted></video>
+        <div class="status"><span id="iDot" class="dot"></span><span id="iStatus">Prêt.</span></div>
+      </div>
+      <div class="card">
+        <h2>Oiseau détecté</h2>
+        <div class="slider">Seuil <input id="iThr" type="range" min="0.3" max="0.95" step="0.05" value="0.7"><b id="iThrV">70 %</b></div>
+        <div id="iRes" class="result idle"><div class="sci">En attente d'une photo…</div></div>
+        <div id="iTruth" class="truth"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Historique des identifications</h2>
+    <ul id="log" class="log"></ul>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const sci = s => s.replace("_", " ");
+let names = {};
+
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === t));
+  $("tab-audio").classList.toggle("hidden", t.dataset.tab !== "audio");
+  $("tab-image").classList.toggle("hidden", t.dataset.tab !== "image");
+});
+
+// Affichage commun : un seul oiseau, seulement au-dessus du seuil
+function showResult(el, best, thr, waitingText) {
+  if (!best) { el.className = "result idle"; el.innerHTML = `<div class="sci">${waitingText}</div>`; return false; }
+  const pct = (best.conf * 100).toFixed(0), meter = `<div class="meter"><div class="fill" style="width:${pct}%"></div>
+    <div class="mark" style="left:${thr * 100}%"></div></div>`;
+  if (best.conf >= thr) {
+    el.className = "result ok";
+    el.innerHTML = `<div class="sci">${sci(best.species)}</div><div class="en">${best.en || names[best.species] || ""}</div>
+      <div class="conf">Confiance ${pct} %</div>${meter}`;
+    return true;
+  }
+  el.className = "result idle";
+  el.innerHTML = `<div class="sci">Aucun oiseau identifié avec certitude</div>
+    <div class="conf">Meilleure confiance ${pct} %, sous le seuil de ${(thr * 100).toFixed(0)} %</div>${meter}`;
+  return false;
+}
+function truth(el, expected, best, ok) {
+  if (!expected) { el.textContent = ""; return; }
+  if (!best) { el.innerHTML = `Vraie espèce : <i>${sci(expected)}</i>`; return; }
+  const good = ok && best.species === expected;
+  el.innerHTML = `Vraie espèce : <i>${sci(expected)}</i> → <b class="${good ? "ok" : "ko"}">${good ? "✓ correct" : ok ? "✗ différent" : "– pas de réponse au-dessus du seuil"}</b>`;
+}
+let lastLogged = {};
+function log(kind, best) {
+  const key = kind + best.species;
+  if (lastLogged[kind] === key) return;
+  lastLogged[kind] = key;
+  const li = document.createElement("li");
+  li.innerHTML = `<span>${kind === "audio" ? "🎙️" : "📷"} <i>${sci(best.species)}</i> — ${best.en || names[best.species] || ""} (${(best.conf * 100).toFixed(0)} %)</span><time>${new Date().toLocaleTimeString()}</time>`;
+  $("log").prepend(li);
+}
+for (const [s, v] of [["aThr", "aThrV"], ["iThr", "iThrV"]])
+  $(s).oninput = () => { $(v).textContent = Math.round($(s).value * 100) + " %"; if (s === "iThr" && lastDet) drawDet(lastDet); };
+
+// ===================== AUDIO =====================
+const WINDOW_S = 5, HOP_MS = 1000, SMOOTH = 0.5;
+let ctx, source, worklet, analyser, stream, ring, ringPos = 0, ringFill = 0, timer, raf, busy = false;
+let smoothed = {}, audioTruth = null, mediaNode = null;
+const workletCode = `class Tap extends AudioWorkletProcessor { process(i) { const c = i[0][0]; if (c) this.port.postMessage(c.slice(0)); return true; } }
+registerProcessor('tap', Tap);`;
+
+async function ensureCtx() {
+  if (ctx) return;
+  ctx = new AudioContext();
+  await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([workletCode], {type: "application/javascript"})));
+  ring = new Float32Array(Math.round(ctx.sampleRate * WINDOW_S));
+}
+function buildGraph(node, toSpeakers) {
+  worklet = new AudioWorkletNode(ctx, "tap");
+  worklet.port.onmessage = e => { for (const v of e.data) { ring[ringPos] = v; ringPos = (ringPos + 1) % ring.length; }
+                                  ringFill = Math.min(ring.length, ringFill + e.data.length); };
+  analyser = new AnalyserNode(ctx, {fftSize: 2048, smoothingTimeConstant: 0});
+  node.connect(worklet); node.connect(analyser); if (toSpeakers) node.connect(ctx.destination);
+  source = node; ringPos = 0; ringFill = 0; ring.fill(0); smoothed = {};
+  timer = setInterval(tick, HOP_MS); drawSpec();
+}
+function teardown() {
+  clearInterval(timer); cancelAnimationFrame(raf);
+  try { source && source.disconnect(); worklet && worklet.disconnect(); } catch (e) {}
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null; source = null; setStatus("Arrêté.", false);
+}
+function setStatus(t, live) { $("status").textContent = t; $("dot").classList.toggle("live", !!live); $("stopBtn").disabled = !live; }
+
+$("micBtn").onclick = async () => {
+  try {
+    teardown(); $("player").pause(); audioTruth = null; $("aTruth").textContent = "";
+    await ensureCtx(); await ctx.resume();
+    stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false}});
+    buildGraph(ctx.createMediaStreamSource(stream), false); setStatus("Écoute du micro…", true);
+  } catch (e) { setStatus("Micro indisponible : " + e.message, false); }
+};
+$("sampleBtn").onclick = async () => {
+  const o = $("sampleSel").selectedOptions[0]; if (!o || !o.dataset.path) return;
+  teardown(); await ensureCtx(); await ctx.resume();
+  $("player").src = "/audio/" + o.dataset.path; audioTruth = o.dataset.species;
+  if (!mediaNode) mediaNode = ctx.createMediaElementSource($("player"));
+  buildGraph(mediaNode, true); await $("player").play(); setStatus("Lecture de XC" + o.dataset.id + "…", true);
+  truth($("aTruth"), audioTruth, null, false);
+};
+$("player").onended = () => teardown();
+$("stopBtn").onclick = () => { teardown(); $("player").pause(); };
+async function loadAudioSamples() {
+  const list = await (await fetch("/api/samples")).json(); const sel = $("sampleSel"); sel.innerHTML = "";
+  for (const s of list) { names[s.species] = s.en; const o = document.createElement("option");
+    o.textContent = `${sci(s.species)} — ${s.en} (${s.length})`; Object.assign(o.dataset, {path: s.path, species: s.species, id: s.id}); sel.appendChild(o); }
+}
+$("shuffleBtn").onclick = loadAudioSamples;
+
+async function tick() {
+  if (busy || ringFill < ctx.sampleRate * 1.5) return;
+  const buf = new Float32Array(ring.length);
+  buf.set(ring.subarray(ringPos)); buf.set(ring.subarray(0, ringPos), ring.length - ringPos);
+  const last = buf.subarray(buf.length - ctx.sampleRate); let rms = 0; for (const v of last) rms += v * v;
+  if (Math.sqrt(rms / last.length) < 0.004) { showResult($("aRes"), null, 0, "Silence / son trop faible"); return; }
+  busy = true;
+  try {
+    const {top} = await (await fetch(`/api/predict?sr=${ctx.sampleRate}`, {method: "POST", body: buf.buffer})).json();
+    const seen = new Set();
+    for (const t of top) { names[t.species] = t.en; smoothed[t.species] = SMOOTH * (smoothed[t.species] || 0) + (1 - SMOOTH) * t.prob; seen.add(t.species); }
+    for (const s in smoothed) if (!seen.has(s)) { smoothed[s] *= SMOOTH; if (smoothed[s] < 0.01) delete smoothed[s]; }
+    const [bs, bp] = Object.entries(smoothed).sort((a, b) => b[1] - a[1])[0] || [];
+    if (bs) {
+      const best = {species: bs, conf: bp, en: names[bs]}, thr = +$("aThr").value;
+      const ok = showResult($("aRes"), best, thr); truth($("aTruth"), audioTruth, best, ok); if (ok) log("audio", best);
+    }
+  } catch (e) { setStatus("Erreur serveur : " + e.message, true); }
+  busy = false;
+}
+function drawSpec() {
+  const c = $("spec"), g = c.getContext("2d"), bins = new Uint8Array(analyser.frequencyBinCount);
+  const maxBin = Math.floor(14000 / (ctx.sampleRate / 2) * bins.length);
+  const step = () => { analyser.getByteFrequencyData(bins); g.drawImage(c, -2, 0);
+    for (let y = 0; y < c.height; y++) { const v = bins[Math.min(Math.floor(Math.pow(maxBin, 1 - y / c.height)), bins.length - 1)];
+      g.fillStyle = `hsl(${160 - v * 0.5}, 80%, ${v / 255 * 60}%)`; g.fillRect(c.width - 2, y, 2, 1); }
+    raf = requestAnimationFrame(step); };
+  step();
+}
+
+// ===================== IMAGE =====================
+let lastDet = null, imgTruth = null, camTimer = null, camStream = null, detBusy = false;
+const stage = $("stage");
+
+function setIStatus(t, live) { $("iStatus").textContent = t; $("iDot").classList.toggle("live", !!live); }
+async function detect(blob, bitmap, expected) {
+  detBusy = true; setIStatus("Analyse…", !!camStream);
+  try {
+    const d = await (await fetch("/api/detect", {method: "POST", body: blob})).json();
+    if (d.error) throw new Error(d.error);
+    lastDet = {d, bitmap}; imgTruth = expected; drawDet(lastDet);
+    setIStatus(camStream ? "Caméra en direct…" : "Analyse terminée.", !!camStream);
+  } catch (e) { setIStatus("Erreur : " + e.message, false); }
+  detBusy = false;
+}
+function drawDet({d, bitmap}) {
+  let c = stage.querySelector("canvas");
+  if (!c) { stage.innerHTML = ""; c = document.createElement("canvas"); stage.appendChild(c); }
+  const scale = Math.min(1, 1000 / Math.max(bitmap.width, bitmap.height));
+  c.width = Math.round(bitmap.width * scale); c.height = Math.round(bitmap.height * scale);
+  const g = c.getContext("2d"); g.drawImage(bitmap, 0, 0, c.width, c.height);
+  const thr = +$("iThr").value, best = d.best;
+  const ok = showResult($("iRes"), best, thr, "Aucun oiseau détecté");
+  if (best && ok) {
+    const [x1, y1, x2, y2] = best.box, X = x1 * c.width, Y = y1 * c.height, W = (x2 - x1) * c.width, H = (y2 - y1) * c.height;
+    const lw = Math.max(3, c.width / 250); g.lineWidth = lw; g.strokeStyle = "#2ee6a0"; g.strokeRect(X, Y, W, H);
+    const label = `${sci(best.species)} ${(best.conf * 100).toFixed(0)} %`;
+    g.font = `600 ${Math.max(14, c.width / 45)}px system-ui`;
+    const tw = g.measureText(label).width + 12, th = Math.max(22, c.width / 32), ly = Y - th < 0 ? Y : Y - th;
+    g.fillStyle = "#2ee6a0"; g.fillRect(X - lw / 2, ly, tw, th);
+    g.fillStyle = "#06261a"; g.fillText(label, X + 6 - lw / 2, ly + th * 0.75);
+    log("image", best);
+  }
+  truth($("iTruth"), imgTruth, best, ok);
+}
+async function analyseFile(file, expected = null) {
+  stopCam(); const bitmap = await createImageBitmap(file); await detect(file, bitmap, expected);
+}
+$("file").onchange = e => e.target.files[0] && analyseFile(e.target.files[0]);
+stage.ondragover = e => { e.preventDefault(); stage.classList.add("drag"); };
+stage.ondragleave = () => stage.classList.remove("drag");
+stage.ondrop = e => { e.preventDefault(); stage.classList.remove("drag"); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith("image/")) analyseFile(f); };
+
+async function loadImageSamples() {
+  const list = await (await fetch("/api/image_samples")).json(); const sel = $("imgSel"); sel.innerHTML = "";
+  for (const s of list) { names[s.species] = s.en; const o = document.createElement("option");
+    o.textContent = `${sci(s.species)} — ${s.en}`; Object.assign(o.dataset, {name: s.name, species: s.species}); sel.appendChild(o); }
+}
+$("imgShuffle").onclick = loadImageSamples;
+$("imgBtn").onclick = async () => {
+  const o = $("imgSel").selectedOptions[0]; if (!o || !o.dataset.name) return;
+  const blob = await (await fetch("/image/" + encodeURIComponent(o.dataset.name))).blob();
+  await analyseFile(blob, o.dataset.species);
+};
+
+$("camBtn").onclick = async () => {
+  try {
+    camStream = await navigator.mediaDevices.getUserMedia({video: {width: {ideal: 1280}, height: {ideal: 720}}});
+    const v = $("video"); v.srcObject = camStream; await v.play();
+    $("camBtn").disabled = true; $("camStop").disabled = false; imgTruth = null; setIStatus("Caméra en direct…", true);
+    camTimer = setInterval(async () => {
+      if (detBusy || !v.videoWidth) return;
+      const bitmap = await createImageBitmap(v);
+      const cv = new OffscreenCanvas(v.videoWidth, v.videoHeight); cv.getContext("2d").drawImage(bitmap, 0, 0);
+      const blob = await cv.convertToBlob({type: "image/jpeg", quality: 0.85});
+      await detect(blob, bitmap, null);
+    }, 800);
+  } catch (e) { setIStatus("Caméra indisponible : " + e.message, false); }
+};
+function stopCam() {
+  clearInterval(camTimer); camTimer = null;
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; setIStatus("Caméra arrêtée.", false); }
+  $("camBtn").disabled = false; $("camStop").disabled = true;
+}
+$("camStop").onclick = stopCam;
+
+loadAudioSamples(); loadImageSamples();
+</script>
+</body>
+</html>

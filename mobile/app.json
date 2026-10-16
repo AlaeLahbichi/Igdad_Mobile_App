@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "Igdad",
+    "slug": "igdad",
+    "scheme": "igdad",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ma.emsi.igdad",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
+    },
+    "android": {
+      "package": "ma.emsi.igdad",
+      "usesCleartextTraffic": true,
+      "adaptiveIcon": {
+        "backgroundColor": "#F7F1E6",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Igdad écoute le chant des oiseaux pour reconnaître les espèces."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Igdad utilise la caméra pour reconnaître les oiseaux.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Igdad analyse les photos d'oiseaux que vous choisissez."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo.png",
+          "imageWidth": 200,
+          "backgroundColor": "#F7F1E6",
+          "dark": {
+            "image": "./assets/logo.png",
+            "backgroundColor": "#0F1714"
+          }
+        }
+      ],
+      "expo-image",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Igdad note l'endroit de chaque détection pour la carte du tableau de bord."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

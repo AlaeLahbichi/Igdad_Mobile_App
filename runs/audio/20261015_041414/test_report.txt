@@ -1,0 +1,96 @@
+Meilleure epoch (val F1) : 20
+TEST  seg acc 0.807 | rec acc 0.886 | rec F1 macro 0.815
+  Algeria    (12 enr.) seg acc 0.406 | rec acc 0.500 | rec F1 macro 0.306
+  Morocco    (197 enr.) seg acc 0.763 | rec acc 0.822 | rec F1 macro 0.718
+  Portugal   (161 enr.) seg acc 0.829 | rec acc 0.932 | rec F1 macro 0.899
+  Spain      (511 enr.) seg acc 0.826 | rec acc 0.906 | rec F1 macro 0.883
+
+                           precision    recall  f1-score   support
+
+        Alaemon_alaudipes       1.00      0.75      0.86         4
+       Alaudala_rufescens       0.71      0.83      0.77        18
+        Alectoris_barbara       1.00      0.33      0.50         3
+       Ammomanes_cinctura       1.00      0.67      0.80         3
+        Ammomanes_deserti       1.00      1.00      1.00         4
+              Argya_fulva       1.00      0.33      0.50         3
+            Athene_noctua       0.95      1.00      0.98        20
+          Bubo_ascalaphus       1.00      1.00      1.00         2
+            Bubulcus_ibis       1.00      0.71      0.83         7
+    Bucanetes_githagineus       1.00      0.95      0.97        20
+      Burhinus_oedicnemus       1.00      0.95      0.97        20
+Calandrella_brachydactyla       0.80      0.67      0.73        12
+    Caprimulgus_aegyptius       1.00      1.00      1.00         2
+    Certhia_brachydactyla       0.90      0.90      0.90        20
+             Cettia_cetti       0.95      0.95      0.95        20
+        Charadrius_dubius       0.94      0.94      0.94        18
+     Chersophilus_duponti       0.79      0.79      0.79        14
+       Cisticola_juncidis       0.91      1.00      0.95        20
+        Corvus_ruficollis       0.00      0.00      0.00         1
+    Curruca_conspicillata       0.91      0.91      0.91        11
+          Curruca_deserti       1.00      1.00      1.00         2
+      Curruca_deserticola       1.00      0.75      0.86         4
+        Curruca_hortensis       1.00      0.91      0.95        11
+          Curruca_iberiae       0.89      0.85      0.87        20
+    Curruca_melanocephala       0.83      1.00      0.91        20
+     Cyanistes_teneriffae       0.87      0.76      0.81        17
+          Emberiza_sahari       0.75      0.75      0.75         8
+         Eremalauda_dunni       0.00      0.00      0.00         1
+     Eremophila_alpestris       0.67      0.67      0.67         3
+       Eremophila_bilopha       0.50      0.50      0.50         2
+     Ficedula_speculigera       0.50      1.00      0.67         2
+        Fringilla_coelebs       0.89      0.85      0.87        20
+        Galerida_cristata       0.75      0.75      0.75        20
+    Galerida_macrorhyncha       0.25      0.50      0.33         2
+         Galerida_theklae       0.72      0.90      0.80        20
+    Himantopus_himantopus       0.95      0.95      0.95        20
+              Iduna_opaca       0.92      1.00      0.96        12
+            Iduna_pallida       0.75      1.00      0.86         3
+         Lanius_excubitor       0.86      1.00      0.92         6
+        Linaria_cannabina       0.95      0.90      0.92        20
+        Loxia_curvirostra       0.85      0.85      0.85        20
+    Luscinia_megarhynchos       0.91      1.00      0.95        20
+   Melanocorypha_calandra       0.83      0.79      0.81        19
+          Merops_apiaster       1.00      1.00      1.00        19
+          Merops_persicus       1.00      1.00      1.00         1
+           Motacilla_alba       0.85      0.85      0.85        20
+          Motacilla_flava       0.90      0.95      0.93        20
+         Oenanthe_deserti       1.00      1.00      1.00         2
+       Oenanthe_halophila       1.00      1.00      1.00         1
+       Oenanthe_leucopyga       1.00      0.40      0.57         5
+         Oenanthe_leucura       0.86      0.75      0.80         8
+          Oenanthe_moesta       0.75      0.75      0.75         4
+        Oenanthe_seebohmi       0.00      0.00      0.00         1
+              Parus_major       0.95      0.95      0.95        20
+        Passer_domesticus       0.89      0.85      0.87        20
+           Passer_simplex       1.00      1.00      1.00         6
+           Periparus_ater       0.95      0.95      0.95        20
+        Petronia_petronia       0.85      0.94      0.89        18
+    Phoenicurus_moussieri       1.00      0.80      0.89         5
+     Phoenicurus_ochruros       1.00      0.85      0.92        20
+  Phoenicurus_phoenicurus       0.90      0.82      0.86        11
+    Phylloscopus_ibericus       1.00      1.00      1.00        20
+         Pica_mauritanica       0.00      0.00      0.00         2
+         Picus_vaillantii       1.00      0.75      0.86         4
+      Pterocles_coronatus       0.00      0.00      0.00         1
+ Pterocles_lichtensteinii       1.00      1.00      1.00         1
+     Pterocles_senegallus       0.67      1.00      0.80         2
+      Pycnonotus_barbatus       0.70      0.78      0.74         9
+     Pyrrhocorax_graculus       0.80      1.00      0.89         4
+  Pyrrhocorax_pyrrhocorax       0.80      0.86      0.83        14
+      Ramphocoris_clotbey       1.00      1.00      1.00         3
+      Regulus_ignicapilla       1.00      1.00      1.00        20
+      Rhodopechys_alienus       1.00      0.67      0.80         3
+        Saxicola_rubicola       0.95      0.95      0.95        20
+      Scotocerca_inquieta       1.00      0.50      0.67         2
+          Serinus_serinus       0.90      0.90      0.90        20
+       Spiloptila_clamans       1.00      1.00      1.00         2
+        Strix_mauritanica       1.00      1.00      1.00         1
+         Sturnus_unicolor       0.79      0.95      0.86        20
+       Tadorna_ferruginea       1.00      1.00      1.00         3
+        Tchagra_senegalus       1.00      1.00      1.00         3
+            Turdus_merula       0.75      0.90      0.82        20
+        Turnix_sylvaticus       1.00      1.00      1.00        12
+
+                 accuracy                           0.89       881
+                macro avg       0.84      0.81      0.82       881
+             weighted avg       0.89      0.89      0.88       881
